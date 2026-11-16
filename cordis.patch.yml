@@ -1,0 +1,3 @@
+- insert:
+    - id: ns-cuga
+      name: '@smitfire/cuga'
