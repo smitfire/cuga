@@ -53,6 +53,13 @@ test('ToolGuard blocks sensitive paths, symlink writeScope escapes, and destruct
 
     const hook = evaluatePreToolHook(dir, JSON.stringify({ toolName: 'read', arguments: { path: '.ssh/id_rsa' } }));
     assert.equal(hook.exitCode, 2);
+
+    const badHook = evaluatePreToolHook(dir, '{not-json');
+    assert.equal(badHook.exitCode, 2);
+
+    const missingRoot = guard.evaluate({ toolName: 'write', args: { path: 'src/a.ts' }, workspaceRoot: join(dir, 'nonexistent-root') });
+    assert.equal(missingRoot.decision, 'deny');
+    assert.equal(missingRoot.code, 'CUGA_WORKSPACE_INVALID');
   } finally {
     rmSync(dir, { recursive: true, force: true });
     rmSync(outside, { recursive: true, force: true });

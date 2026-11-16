@@ -60,13 +60,21 @@ class RpcError extends Error {
 }
 
 export function evaluatePreToolHook(workspaceRoot: string, rawJson: string): { exitCode: number; output: string } {
-  const payload = JSON.parse(rawJson) as {
+  let payload: {
     toolName?: string;
     tool_name?: string;
     arguments?: Record<string, unknown>;
     tool_input?: Record<string, unknown>;
     writeScopes?: string[];
   };
+  try {
+    payload = JSON.parse(rawJson);
+  } catch {
+    return {
+      exitCode: 2,
+      output: JSON.stringify({ decision: 'deny', code: 'CUGA_HOOK_INPUT_INVALID', reason: 'hook payload is not valid JSON' }),
+    };
+  }
   const guard = new ToolGuard();
   const res = guard.evaluate({
     toolName: String(payload.toolName ?? payload.tool_name ?? ''),

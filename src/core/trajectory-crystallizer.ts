@@ -34,7 +34,7 @@ export class TrajectoryCrystallizer {
     const title = `Playbook: ${input.goal.replace(ABS_PATH_RE, '<PATH>').trim().slice(0, 110)}`;
     const summary = `Verified ${cleanSteps.length}-step sequence for ${input.goal.trim().slice(0, 120)}`.slice(0, 195);
     const body = [
-      `Goal: ${input.goal.replace(ABS_PATH_RE, '<WORKSPACE_PATH>').trim()}`,
+      `Goal: ${input.goal.replace(ABS_PATH_RE, '<WORKSPACE_PATH>').trim().slice(0, 200)}`,
       'Verified Steps:',
       ...parameterized,
     ].join('\n');

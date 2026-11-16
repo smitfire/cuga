@@ -33,11 +33,18 @@ function resolveExistingPrefix(targetPath) {
     return tail.length > 0 ? resolve(realBase, ...tail) : realBase;
 }
 function isWithinScope(workspaceRoot, rawPath, writeScopes) {
-    const realRoot = realpathSync(resolve(workspaceRoot));
-    const candidate = isAbsolute(rawPath) ? resolve(rawPath) : resolve(realRoot, rawPath);
-    const resolved = resolveExistingPrefix(candidate);
+    let realRoot;
+    let resolved;
+    try {
+        realRoot = realpathSync(resolve(workspaceRoot));
+        const candidate = isAbsolute(rawPath) ? resolve(rawPath) : resolve(realRoot, rawPath);
+        resolved = resolveExistingPrefix(candidate);
+    }
+    catch (err) {
+        return { ok: false, rel: rawPath, error: err instanceof Error ? err.message : String(err) };
+    }
     const rel = relative(realRoot, resolved);
-    if (!rel || rel === '' ? false : rel.startsWith('..') || rel.split(sep).includes('..')) {
+    if (rel === '' || rel === '..' || rel.startsWith(`..${sep}`)) {
         return { ok: false, rel };
     }
     if (!writeScopes || writeScopes.length === 0)
@@ -73,6 +80,13 @@ export class ToolGuard {
             }
             if (isWriteTool) {
                 const scopeCheck = isWithinScope(workspaceRoot, pathArg, writeScopes);
+                if (scopeCheck.error) {
+                    return {
+                        decision: 'deny',
+                        code: 'CUGA_WORKSPACE_INVALID',
+                        reason: `workspace resolution failed for "${pathArg}": ${scopeCheck.error}`,
+                    };
+                }
                 if (!scopeCheck.ok) {
                     return {
                         decision: 'ask_hitl',

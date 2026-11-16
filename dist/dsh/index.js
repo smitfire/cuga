@@ -69,15 +69,20 @@ export function apply(ctx, rawConfig = {}) {
             },
         });
     });
+    const log = ctx.logger('ns-cuga');
     ctx.on('agent/pre-step', async (payload, next) => {
         const sid = String(payload.agent.session.id);
         const st = stateFor(sid);
+        if (payload.step === 1)
+            st.hadDenial = false;
         const prompt = extractUserText(payload.messages);
         if (prompt) {
             st.goal = prompt;
             if (enforceIntentGuard) {
                 const intent = intentGuard.evaluate(prompt);
                 if (intent.decision === 'deny') {
+                    st.hadDenial = true;
+                    log.warn(`IntentGuard rejected prompt for ${sid}: ${intent.reason ?? 'blocked'}`);
                     return { kind: 'reject' };
                 }
             }
